@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>死神オカンの一問一答</title>
+    <title>ちび死神のおかん勉強塾</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <style>
         :root {
@@ -102,7 +102,7 @@
         .btn-choice.correct-choice { background-color: rgba(46, 204, 113, 0.2); border-color: var(--success-color); font-weight: bold; }
         .btn-choice.wrong-choice { background-color: rgba(255, 118, 117, 0.2); border-color: var(--accent-color); }
 
-        /* 結果判定・解説ボックス（文字として明示） */
+        /* 判定＆解説ボックス */
         .judge-box { margin-top: 20px; padding: 20px; border-radius: 12px; display: none; animation: fadeIn 0.3s ease; }
         .judge-success { background-color: rgba(46, 204, 113, 0.12); color: #1b5e20; border: 2px solid var(--success-color); }
         .judge-wrong { background-color: rgba(255, 118, 117, 0.12); color: #b71c1c; border: 2px solid var(--accent-color); }
@@ -126,7 +126,7 @@
 <body>
 
     <header>
-        <h1>死神オカンの一問一答</h1>
+        <h1>ちび死神のおかん勉強塾</h1>
         <p>「こらー！サボったらあかんで！おかんが教えたる！」</p>
     </header>
 
@@ -152,13 +152,16 @@
             </div>
 
             <div class="card">
-                <h3>📂 問題データの追加（CSV/JSON）</h3>
+                <h3>📂 問題データの追加・管理</h3>
+                <p style="font-size: 0.85rem; color: #777;" id="total-questions-count">現在の総問題数: 0問</p>
                 <div id="drop-zone" class="drop-zone">
-                    ここにCSVファイルをドラッグ＆ドロップするか、クリックして選択してや！
+                    ここにCSVファイルをドラッグ＆ドロップするか、クリックして選択してや！<br>
+                    <strong>（追加するたびに、どんどん問題が蓄積されていくで！）</strong>
                     <input type="file" id="file-input" accept=".csv,.json" style="display: none;">
                 </div>
-                <div style="margin-top: 12px; display: flex; gap: 10px; justify-content: center;">
+                <div style="margin-top: 12px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
                     <button class="btn-main" onclick="downloadSampleCSV()">📄 サンプルCSVを貰う</button>
+                    <button class="btn-main" style="background-color:#20bf6b;" onclick="downloadCurrentQuestionsCSV()">📥 現在の問題集をDLする</button>
                     <button class="btn-main" style="background-color:#ff7675;" onclick="clearCustomQuestions()">♻️ データを元に戻す</button>
                 </div>
             </div>
@@ -208,7 +211,7 @@
         // 1. データ・外部ファイルパス定義
         // ==========================================
 
-        // 外部画像フォルダのパス指定
+        // 外部画像フォルダのパス指定 (.png)
         const OKAN_IMAGES = {
             normal: "images/normal.png",
             happy: "images/happy.png",
@@ -217,10 +220,10 @@
             surprised: "images/surprised.png"
         };
 
-        // 効果音ファイルのパス指定
+        // 効果音ファイルのパス指定（.wavから.mp3に更新！）
         const SOUND_PATHS = {
-            correct: "sounds/correct.wav",
-            incorrect: "sounds/incorrect.wav"
+            correct: "sounds/correct.mp3",
+            incorrect: "sounds/incorrect.mp3"
         };
 
         // おかんのセリフ集
@@ -273,11 +276,11 @@
 
         // 内蔵デフォルト問題
         const DEFAULT_QUESTIONS = [
-            { subject: "国語", question: "「おかん」を標準語に直したとき、最も適切なものはどれ？", choice1: "お姉さん", choice2: "お母さん", choice3: "おばあちゃん", choice4: "お嬢さん", answer: 1, explanation: "「おかん」は主に関西地方で「お母さん」を親しみを込めて呼ぶ言葉やで！" },
-            { subject: "数学", question: "一次方程式 2x + 5 = 11 のとき、x の値はいくつ？", choice1: "2", choice2: "3", choice3: "4", choice4: "5", answer: 1, explanation: "2x = 11 - 5 より 2x = 6。両辺を2で割って x = 3 になるな！" },
-            { subject: "英語", question: "「私は毎日勉強します」を英語にした時、空欄に入るのは？ \n I (   ) English every day.", choice1: "studies", choice2: "studying", choice3: "study", choice4: "studied", answer: 2, explanation: "主語が I（一人称単数）で、現在の習慣を表すから動詞の原形「study」が入るで！" },
-            { subject: "理科", question: "植物が光を受けてデンプンなどの養分を作る働きを何という？", choice1: "呼吸", choice2: "蒸散", choice3: "光合成", choice4: "吸収", answer: 2, explanation: "葉緑体で行われる「光合成」やね。水と二酸化炭素から酸素と養分を作るんやで！" },
-            { subject: "社会", question: "日本で一番高い山「富士山」の標高は次のうちどれ？", choice1: "3,776m", choice2: "3,180m", choice3: "2,500m", choice4: "4,123m", answer: 0, explanation: "「みななろ（3776）富士山」って覚えるんやでおかんとの約束な！" }
+            { subject: "国語", question: "「おかん」を標準語に直したとき、最も適切なものはどれ？", choice1: "お姉さん", choice2: "お母さん", choice3: "おばあちゃん", choice4: "お嬢さん", answer: 2, explanation: "「おかん」は主に関西地方で「お母さん」を親しみに込めて呼ぶ言葉やで！" },
+            { subject: "数学", question: "一次方程式 2x + 5 = 11 のとき、x の値はいくつ？", choice1: "2", choice2: "3", choice3: "4", choice4: "5", answer: 2, explanation: "2x = 11 - 5 より 2x = 6。両辺を2で割って x = 3 になるな！" },
+            { subject: "英語", question: "「私は毎日勉強します」を英語にした時、空欄に入るのは？ \n I (   ) English every day.", choice1: "studies", choice2: "studying", choice3: "study", choice4: "studied", answer: 3, explanation: "主語が I（一人称単数）で、現在の習慣を表すから動詞の原形「study」が入るで！" },
+            { subject: "理科", question: "植物が光を受けてデンプンなどの養分を作る働きを何という？", choice1: "呼吸", choice2: "蒸散", choice3: "光合成", choice4: "吸収", answer: 3, explanation: "葉緑体で行われる「光合成」やね。水と二酸化炭素から酸素と養分を作るんやで！" },
+            { subject: "社会", question: "日本で一番高い山「富士山」の標高は次のうちどれ？", choice1: "3,776m", choice2: "3,180m", choice3: "2,500m", choice4: "4,123m", answer: 1, explanation: "「みななろ（3776）富士山」って覚えるんやでおかんとの約束な！" }
         ];
 
         // 状態管理
@@ -307,6 +310,7 @@
             } else {
                 questions = [...DEFAULT_QUESTIONS];
             }
+            document.getElementById('total-questions-count').innerText = `現在の総問題数: ${questions.length}問`;
         }
 
         function updateHomeStats() {
@@ -397,20 +401,23 @@
             const correctAnswerDisplay = document.getElementById('correct-answer-display');
             const explanationDisplay = document.getElementById('explanation-display');
             
-            const isCorrect = (selectedIdx === parseInt(q.answer));
+            // CSV側の「1〜4」を、プログラムの「0〜3」に合わせるため -1 する
+            const correctIdx = parseInt(q.answer) - 1;
+            const isCorrect = (selectedIdx === correctIdx);
+            
             updateStats(q.subject, isCorrect);
 
             // 全ボタン無効化 & スタイル反映
             Array.from(container.children).forEach((btn, idx) => {
                 btn.disabled = true;
-                if (idx === parseInt(q.answer)) {
+                if (idx === correctIdx) {
                     btn.classList.add('correct-choice'); // 正解の選択肢をハイライト
                 } else if (idx === selectedIdx && !isCorrect) {
                     btn.classList.add('wrong-choice'); // 間違えて選んだ肢
                 }
             });
 
-            // 正解・不正解処理 (文字表示＋効果音)
+            // 正解・不正解処理 (文字表示＋mp3効果音)
             if (isCorrect) {
                 score++;
                 playSound(SOUND_PATHS.correct);
@@ -435,7 +442,7 @@
             }
 
             // 問題・正解・解説の「文字表示」処理
-            correctAnswerDisplay.innerHTML = `<strong>【問題文】</strong><br>${q.question}<br><br><strong>【正解】</strong> ${getChoiceText(q, q.answer)}`;
+            correctAnswerDisplay.innerHTML = `<strong>【問題文】</strong><br>${q.question}<br><br><strong>【正解】</strong> ${getChoiceText(q, correctIdx)}`;
             explanationDisplay.innerHTML = `<strong>おかんの解説:</strong><br>${q.explanation || '解説は特にあらへん。次はバチッと当てよな！'}`;
 
             judgeBox.style.display = "block";
@@ -467,7 +474,7 @@
         }
 
         // ==========================================
-        // 4. データ保存・読み込み関連
+        // 4. データ保存・読み込み関連（蓄積＆DL対応）
         // ==========================================
         function setupDragAndDrop() {
             const dropZone = document.getElementById('drop-zone');
@@ -510,21 +517,35 @@
             }
         }
 
-        function processImportedQuestions(data) {
-            if (!Array.isArray(data) || data.length === 0 || !data[0].subject || !data[0].question) {
+        // 🌟【改善】問題を上書きせず、重複を避けながら「蓄積」する処理
+        function processImportedQuestions(newData) {
+            if (!Array.isArray(newData) || newData.length === 0 || !newData[0].subject || !newData[0].question) {
                 alert("データのフォーマットが間違ってるっぽいでおかんの指定通りに作ってな。");
                 setOkanMood('angry', "コラ！データの形がバラバラやんか！");
                 return;
             }
-            questions = data;
+
+            let addedCount = 0;
+            
+            newData.forEach(newQ => {
+                // すでに同じ問題文が登録されていないかチェック
+                const isDuplicate = questions.some(oldQ => oldQ.question === newQ.question);
+                if (!isDuplicate) {
+                    questions.push(newQ);
+                    addedCount++;
+                }
+            });
+
             localStorage.setItem('okan_custom_questions', JSON.stringify(questions));
-            setOkanMood('surprised', "お見事！新しい問題データを読み込んだで！おかんもびっくりや！");
-            alert(`${data.length}問の問題を新しくセットしたで！`);
+            setOkanMood('surprised', `お見事！新しく${addedCount}問を蓄積したで！合計で${questions.length}問になったわ！`);
+            alert(`新しく ${addedCount} 問のデータを追加（蓄積）したで！\n（重複していた問題はスキップされました）`);
+            
+            document.getElementById('total-questions-count').innerText = `現在の総問題数: ${questions.length}問`;
             updateHomeStats();
         }
 
         function clearCustomQuestions() {
-            if (confirm("本当に初期の問題データに戻してええの？")) {
+            if (confirm("本当に初期の問題データに戻してええの？あんたがコツコツ貯めた問題データも全部消えちゃうで。")) {
                 localStorage.removeItem('okan_custom_questions');
                 loadQuestions();
                 setOkanMood('normal', "初期データに戻したで！");
@@ -532,10 +553,32 @@
             }
         }
 
+        // 🌟【新機能】現在溜まっている問題集データをCSVとしてダウンロード
+        function downloadCurrentQuestionsCSV() {
+            if (questions.length === 0) {
+                alert("問題データが1問もあらへんよ！");
+                return;
+            }
+
+            // PapaParseを使ってJSON配列をCSV文字列に逆変換
+            const csvString = Papa.unparse(questions);
+            
+            // Excel対応用のBOMを先頭に付与して文字化けを防ぐ
+            const blob = new Blob(["\uFEFF" + csvString], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", "my_okan_questions_bank.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            setOkanMood('happy', "あんた専用の問題集CSVを書き出したで！大切に保管しときや〜！");
+        }
+
         function downloadSampleCSV() {
             const csvContent = "\uFEFF" + "subject,question,choice1,choice2,choice3,choice4,answer,explanation\n" +
-                "数学,一次関数 y = 2x + 3 で x = 4 のときの y の値は？,8,11,14,16,1,y = 2 × 4 + 3 = 8 + 3 = 11 となるな！簡単や！\n" +
-                "国語,「矛盾（むじゅん）」の由来となった２つの武器は？,剣と盾,矛と盾,弓と矢,斧と矛,1,どんな盾も突き通す「矛」と防ぐ「盾」の話からできた言葉や。";
+                "数学,一次関数 y = 2x + 3 で x = 4 のときの y の値は？,8,11,14,16,2,y = 2 × 4 + 3 = 8 + 3 = 11 となるな！簡単や！\n" +
+                "国語,「矛盾（むじゅん）」の由来となった２つの武器は？,剣と盾,矛と盾,弓と矢,斧と矛,2,どんな盾も突き通す「矛」と防ぐ「盾」の話からできた言葉や。";
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
             const link = document.createElement("a");
@@ -568,7 +611,7 @@
 
         function playSound(src) {
             const audio = new Audio(src);
-            audio.play().catch(e => console.log("ユーザーのアクション前やから音が出せへんかったか、ファイルがあらへんみたいやね：", e));
+            audio.play().catch(e => console.log("音声ファイルの再生に失敗したか、まだファイルが設置されてへんみたいやね：", e));
         }
 
         // ユーティリティ
@@ -577,7 +620,7 @@
             document.getElementById(viewId).classList.add('active');
         }
         function getRandomSerifu(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
-        function getChoiceText(q, idx) { return [q.choice1, q.choice2, q.choice3, q.choice4][parseInt(idx)] || ""; }
+        function getChoiceText(q, idx) { return [q.choice1, q.choice2, q.choice3, q.choice4][idx] || ""; }
         function shuffleArray(array) {
             const arr = [...array];
             for (let i = arr.length - 1; i > 0; i--) {
@@ -597,13 +640,5 @@
         function retrySubject() { if (isReviewMode) startReview(); else startSession(currentSubject); }
         function goHome() { switchView('view-home'); updateHomeStats(); setOkanMood('normal', "お帰り！次はどの教科にチャレンジするん？"); }
     </script>
-
-<div style="margin: 50px 0; padding: 20px; text-align: center; font-size: 0.85em; color: #666; border-top: 1px solid #eee;">
-<strong>免責事項</strong><br>
-本サイトは個人の学習・トレーニング記録のための個人プロジェクトです。<br>
-記載内容は作者の経験に基づくものであり、専門的な指導ではありません。<br>
-運動・学習は自己責任にて行ってください。利用によるいかなる損害についても作者は責任を負いません。
-</div>
-
 </body>
 </html>

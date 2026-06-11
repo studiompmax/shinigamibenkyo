@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>死神オカンの一問一答</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <style>
+        :root {
+            --bg-color: #f7f9fc;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+            --primary-color: #6c5ce7;
+            --accent-color: #ff7675;
+            --success-color: #2ecc71;
+            --border-radius: 16px;
+            --shadow: 0 8px 24px rgba(0,0,0,0.05);
+        }
+
+        /* ダークモード対応 */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-color: #1a1a2e;
+                --card-bg: #16213e;
+                --text-color: #e2e8f0;
+                --primary-color: #a29bfe;
+                --accent-color: #ff7675;
+                --success-color: #26de81;
+                --shadow: 0 8px 24px rgba(0,0,0,0.3);
+            }
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Helvetica Neue', Arial, sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text-color); transition: all 0.3s ease; padding-bottom: 180px; min-height: 100vh; }
+
+        header { background: linear-gradient(135deg, var(--primary-color), #a29bfe); color: white; padding: 20px; text-align: center; border-radius: 0 0 24px 24px; box-shadow: var(--shadow); position: relative; }
+        header h1 { font-size: 1.8rem; margin-bottom: 5px; }
+        header p { font-size: 0.9rem; opacity: 0.9; }
+
+        .container { max-width: 600px; margin: 20px auto; padding: 0 15px; }
+        .card { background-color: var(--card-bg); border-radius: var(--border-radius); padding: 20px; box-shadow: var(--shadow); margin-bottom: 20px; transition: transform 0.2s; position: relative; }
+        
+        /* 画面制御 */
+        .view-section { display: none; }
+        .view-section.active { display: block; animation: fadeIn 0.4s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* おかん死神の固定配置（右下） */
+        #okan-container {
+            position: fixed; bottom: 20px; right: 20px; z-index: 1000;
+            display: flex; flex-direction: column; align-items: flex-end; pointer-events: none; max-width: 300px;
+        }
+        #okan-balloon {
+            background: white; border: 3px solid var(--primary-color); border-radius: 15px;
+            padding: 10px 15px; margin-bottom: 10px; font-size: 0.9rem; font-weight: bold; color: #333;
+            box-shadow: var(--shadow); position: relative; pointer-events: auto; max-height: 120px; overflow-y: auto;
+        }
+        #okan-balloon::after {
+            content: ''; position: absolute; bottom: -12px; right: 30px;
+            border-width: 12px 12px 0; border-style: solid; border-color: var(--primary-color) transparent; display: block; width: 0;
+        }
+        #okan-img-box {
+            width: 110px; height: 110px; pointer-events: auto; cursor: pointer; display: flex; justify-content: center; align-items: center;
+        }
+        #okan-img {
+            width: 100%; height: 100%; object-fit: contain;
+            filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.2));
+            animation: okan-float 3s ease-in-out infinite;
+        }
+
+        @keyframes okan-float {
+            0% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-8px) rotate(3deg); }
+            100% { transform: translateY(0px) rotate(0deg); }
+        }
+
+        /* 5教科ボタン */
+        .subject-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 15px; }
+        .btn-subject {
+            padding: 15px; border: none; border-radius: 12px; font-size: 1.1rem; font-weight: bold; color: white; cursor: pointer;
+            transition: transform 0.1s, opacity 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        .btn-subject:active { transform: scale(0.95); }
+        .sub-kokugo { background-color: #e66767; }
+        .sub-suugaku { background-color: #30336b; }
+        .sub-eigo { background-color: #3fe0d0; color: #333; }
+        .sub-rika { background-color: #20bf6b; }
+        .sub-shakai { background-color: #f7b731; color: #333; }
+        .sub-review { background-color: #8854d0; grid-column: span 2; }
+
+        /* クイズ画面 */
+        .quiz-header { display: flex; justify-content: space-between; align-items: center; font-weight: bold; margin-bottom: 15px; padding-bottom: 5px; border-bottom: 2px dashed var(--primary-color); }
+        #question-text { font-size: 1.2rem; font-weight: bold; margin-bottom: 20px; line-height: 1.5; white-space: pre-wrap; }
+        .choices-grid { display: flex; flex-direction: column; gap: 10px; }
+        .btn-choice {
+            padding: 14px; text-align: left; border: 2px solid var(--primary-color); background-color: var(--card-bg);
+            color: var(--text-color); border-radius: 10px; font-size: 1rem; cursor: pointer; transition: all 0.2s;
+        }
+        .btn-choice:hover { background-color: rgba(108, 92, 231, 0.1); }
+        .btn-choice:disabled { pointer-events: none; opacity: 0.7; }
+        .btn-choice.correct-choice { background-color: rgba(46, 204, 113, 0.2); border-color: var(--success-color); font-weight: bold; }
+        .btn-choice.wrong-choice { background-color: rgba(255, 118, 117, 0.2); border-color: var(--accent-color); }
+
+        /* 判定＆解説ボックス */
+        .judge-box { margin-top: 20px; padding: 20px; border-radius: 12px; display: none; animation: fadeIn 0.3s ease; }
+        .judge-success { background-color: rgba(46, 204, 113, 0.12); color: #1b5e20; border: 2px solid var(--success-color); }
+        .judge-wrong { background-color: rgba(255, 118, 117, 0.12); color: #b71c1c; border: 2px solid var(--accent-color); }
+        .judge-title { font-size: 1.4rem; font-weight: bold; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+        .info-block { margin-top: 12px; padding-top: 12px; border-top: 1px dashed rgba(0,0,0,0.1); font-size: 0.95rem; line-height: 1.5; }
+
+        .btn-next { display: none; width: 100%; padding: 15px; background-color: var(--primary-color); color: white; border: none; border-radius: 10px; font-size: 1.1rem; margin-top: 15px; cursor: pointer; font-weight: bold; }
+
+        /* 汎用ボタン・ドロップエリア */
+        .btn-main { padding: 10px 20px; background-color: var(--primary-color); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        .btn-abort { padding: 4px 10px; background-color: var(--accent-color); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: bold; }
+        .drop-zone { border: 3px dashed var(--primary-color); border-radius: 12px; padding: 20px; text-align: center; cursor: pointer; margin-top: 10px; transition: background 0.3s; }
+        .drop-zone.dragover { background-color: rgba(108, 92, 231, 0.1); }
+        
+        .stats-list { font-size: 0.9rem; line-height: 1.6; }
+
+        /* 結果画面 */
+        .score-display { text-align: center; font-size: 2rem; font-weight: bold; margin: 20px 0; color: var(--accent-color); }
+        .result-actions { display: flex; flex-direction: column; gap: 10px; }
+
+        /* フッター免責事項 */
+        footer {
+            margin-top: 40px; padding: 20px; text-align: center; font-size: 0.75rem; color: #777; line-height: 1.6; border-top: 1px dashed rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>死神オカンの一問一答</h1>
+        <p>「こらー！サボったらあかんで！おかんが教えたる！」</p>
+    </header>
+
+    <div class="container">
+        <section id="view-home" class="view-section active">
+            <div class="card">
+                <h3>どの教科を勉強するん？</h3>
+                <div class="subject-grid">
+                    <button class="btn-subject sub-kokugo" onclick="startSession('国語')">国語</button>
+                    <button class="btn-subject sub-suugaku" onclick="startSession('数学')">数学</button>
+                    <button class="btn-subject sub-eigo" onclick="startSession('英語')">英語</button>
+                    <button class="btn-subject sub-rika" onclick="startSession('理科')">理科</button>
+                    <button class="btn-subject sub-shakai" onclick="startSession('社会')">社会</button>
+                    <button class="btn-subject sub-review" id="btn-review" onclick="startReview()">👹 苦手問題の復習 (<span id="review-count">0</span>)</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>📊 あんたの頑張り具合（進捗）</h3>
+                <div class="stats-list" id="stats-box">
+                    まだデータがあらへん。これから一緒に頑張ろな！
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>📂 問題データの追加・管理</h3>
+                <p style="font-size: 0.85rem; color: #777;" id="total-questions-count">現在の総問題数: 0問</p>
+                <div id="drop-zone" class="drop-zone">
+                    ここにCSVファイルをドラッグ＆ドロップするか、クリックして選択してや！<br>
+                    <strong>（同じ問題文があれば、新しい内容に上書き修正されるで！）</strong>
+                    <input type="file" id="file-input" accept=".csv,.json" style="display: none;">
+                </div>
+                <div style="margin-top: 12px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                    <button class="btn-main" onclick="downloadSampleCSV()">📄 サンプルCSVを貰う</button>
+                    <button class="btn-main" style="background-color:#20bf6b;" onclick="downloadCurrentQuestionsCSV()">📥 現在の問題集をDLする</button>
+                    <button class="btn-main" style="background-color:#ff7675;" onclick="clearCustomQuestions()">♻️ データを元に戻す</button>
+                </div>
+            </div>
+        </section>
+
+        <section id="view-quiz" class="view-section">
+            <div class="card">
+                <div class="quiz-header">
+                    <div>
+                        <span id="quiz-subject">教科</span>
+                        <span id="quiz-progress" style="margin-left: 10px; font-size: 0.9rem; color: #777;">0 / 0 問目</span>
+                    </div>
+                    <button class="btn-abort" onclick="abortSession()">🏠 途中でやめる</button>
+                </div>
+                <div id="question-text">ここに問題文が表示されるで。</div>
+                <div class="choices-grid" id="choices-container">
+                    </div>
+
+                <div id="judge-box" class="judge-box">
+                    <div id="judge-title" class="judge-title"></div>
+                    <div id="correct-answer-display" style="font-weight: bold;"></div>
+                    <div id="explanation-display" class="info-block"></div>
+                </div>
+                <button id="btn-next" class="btn-next" onclick="nextQuestion()">次へ進む！</button>
+            </div>
+        </section>
+
+        <section id="view-result" class="view-section">
+            <div class="card">
+                <h3>テストお疲れさん！結果発表や！</h3>
+                <div class="score-display" id="result-score">0 / 10 問正解</div>
+                <div class="result-actions">
+                    <button class="btn-main" onclick="retrySubject()">同じ教科をもう一回！</button>
+                    <button class="btn-main" style="background-color:#20bf6b;" onclick="goHome()">他の教科にする</button>
+                    <button class="btn-main sub-review" id="btn-result-review" onclick="startReview()">苦手問題を復習する</button>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <footer>
+        本サイトは個人の学習・トレーニング記録のための個人プロジェクトです。<br>
+        記載内容は作者の経験に基づくものであり、専門的な指導ではありません。運動・学習は自己責任にて行ってください。<br>
+        利用によるいかなる損害についても作者は責任を負いません。
+    </footer>
+
+    <div id="okan-container">
+        <div id="okan-balloon">あんた、お勉強の時間やで！おかんがしっかり見てるからな！</div>
+        <div id="okan-img-box" onclick="triggerOkanGreeting()">
+            <img id="okan-img" src="images/normal.png" alt="ちび死神おかん">
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // 1. データ・外部ファイルパス定義
+        // ==========================================
+
+        const OKAN_IMAGES = {
+            normal: "images/normal.png",
+            happy: "images/happy.png",
+            sad: "images/sad.png",
+            angry: "images/angry.png",
+            surprised: "images/surprised.png"
+        };
+
+        const SOUND_PATHS = {
+            correct: "sounds/correct.mp3",
+            incorrect: "sounds/incorrect.mp3"
+        };
+
+        // おかんのセリフ集（末尾にカンマを打てば、いくらでも行を追加できるで！）
+        const SERIFU = {
+            welcome: [
+                "おっ、やる気出してきたやん！おかん嬉しいわぁ。",
+                "サボったらあかんで！おかんが横でガッツリ見たるからな。",
+                "体調は大丈夫？無理したらいかんで、でも勉強はしよな！"
+            ],
+            correct: [
+                "よっしゃ正解！あんた天才とちゃう！？おかん鼻が高いわぁ！",
+                "大正解！その調子や！今日のおやつはちょっと豪華にしたるわな！",
+                "すごいやん！ちゃんと勉強の成果出とるね、えらいえらい！",
+                "完璧や！おかん、感動して涙出てきそうやわ…"
+            ],
+            wrong: [
+                "あらら、ちょっとミスってもうたか。まぁ次気いつけたら大丈夫や！",
+                "どんまいどんまい！間違えたとこが一番賢くなれるチャンスやで。",
+                "おっと、うっかりさんやね。解説しっかり読んで次進もか！",
+                "あきらめたらあかんで！おかんが何回でも付き合いたるからな。"
+            ],
+            cheer: [
+                "よしよし、集中力上がってきたんちゃう？",
+                "姿勢悪くなってへん？背筋ピッと伸ばして頑張りや！",
+                "ちょっと休憩挟む？…って、まだ3問目やないかい！笑",
+                "あんたなら出来るって、おかんが一番信じてるからね。"
+            ],
+            angry: [
+                "こらー！もうちょっと集中しなさい！",
+                "画面ばっかりぼーっと見てたらあかんで！",
+                "ほらほら、よそ見せんと問題に集中！"
+            ],
+            surprised: [
+                "ひええぇっ！えらい難しい問題持ってきたなぁ！",
+                "な、なんやて！？おかんもびっくりやわ！"
+            ],
+            finish_perfect: [
+                "うわぁぁ全問正解やん！おかん、嬉しすぎてご近所さんに言いふらしてくるわ！",
+                "文句なしの満点！あんたはホンマに自慢の我が子やわぁ！！"
+            ],
+            finish_good: [
+                "よお頑張った！合格点やね。この調子でどんどん進もうや！",
+                "ええ感じやん！間違えたところだけ、あとでちょっと復習しときや。"
+            ],
+            finish_bad: [
+                "今回はちょっと難しかったか。おかんと一緒に「苦手復習」でもう一回やろ？",
+                "伸び代がいっぱいあるってことや！おかん、何回でも付き合うたるからな！"
+            ]
+        };
+
+        const DEFAULT_QUESTIONS = [
+            { subject: "国語", question: "「おかん」を標準語に直したとき、最も適切なものはどれ？", choice1: "お姉さん", choice2: "お母さん", choice3: "おばあちゃん", choice4: "お嬢さん", answer: 2, explanation: "「おかん」は主に関西地方で「お母さん」を親しみに込めて呼ぶ言葉やで！" },
+            { subject: "数学", question: "一次方程式 2x + 5 = 11 のとき、x の値はいくつ？", choice1: "2", choice2: "3", choice3: "4", choice4: "5", answer: 2, explanation: "2x = 11 - 5 より 2x = 6。両辺を2で割って x = 3 になるな！" },
+            { subject: "英語", question: "「私は毎日勉強します」を英語にした時、空欄に入るのは？ \n I (   ) English every day.", choice1: "studies", choice2: "studying", choice3: "study", choice4: "studied", answer: 3, explanation: "主語が I（一人称単数）で、現在の習慣を表すから動詞の原形「study」が入るで！" },
+            { subject: "理科", question: "植物が光を受けてデンプンなどの養分を作る働きを何という？", choice1: "呼吸", choice2: "蒸散", choice3: "光合成", choice4: "吸収", answer: 3, explanation: "葉緑体で行われる「光合成」やね。水と二酸化炭素から酸素と養分を作るんやで！" },
+            { subject: "社会", question: "日本で一番高い山「富士山」の標高は次のうちどれ？", choice1: "3,776m", choice2: "3,180m", choice3: "2,500m", choice4: "4,123m", answer: 1, explanation: "「みななろ（3776）富士山」って覚えるんやでおかんとの約束な！" }
+        ];
+
+        let questions = [];
+        let currentSessionQuestions = [];
+        let currentIndex = 0;
+        let score = 0;
+        let wrongList = JSON.parse(localStorage.getItem('okan_wrong_list')) || [];
+        let historyStats = JSON.parse(localStorage.getItem('okan_stats')) || { total: 0, correct: 0, subjects: {} };
+        let currentSubject = "";
+        let isReviewMode = false;
+
+        // ==========================================
+        // 2. アプリ起動・初期化
+        // ==========================================
+        window.addEventListener('DOMContentLoaded', () => {
+            loadQuestions();
+            updateHomeStats();
+            setOkanMood('normal', getRandomSerifu(SERIFU.welcome));
+            setupDragAndDrop();
+        });
+
+        function loadQuestions() {
+            const localData = localStorage.getItem('okan_custom_questions');
+            if (localData) {
+                questions = JSON.parse(localData);
+            } else {
+                questions = [...DEFAULT_QUESTIONS];
+            }
+            document.getElementById('total-questions-count').innerText = `現在の総問題数: ${questions.length}問`;
+        }
+
+        function updateHomeStats() {
+            document.getElementById('review-count').innerText = wrongList.length;
+            const statsBox = document.getElementById('stats-box');
+            if (historyStats.total === 0) {
+                statsBox.innerHTML = "まだデータがあらへん。これから一緒に頑張ろな！";
+                return;
+            }
+
+            const rate = ((historyStats.correct / historyStats.total) * 100).toFixed(1);
+            let html = `<p><strong>総解答数:</strong> ${historyStats.total}問 / <strong>全体の正答率:</strong> ${rate}%</p><ul style="margin-left:20px; margin-top:5px;">`;
+            for (const sub in historyStats.subjects) {
+                const s = historyStats.subjects[sub];
+                const r = ((s.correct / s.total) * 100).toFixed(1);
+                html += `<li>${sub}: ${s.correct}/${s.total}問 (${r}%)</li>`;
+            }
+            html += `</ul>`;
+            statsBox.innerHTML = html;
+        }
+
+        // ==========================================
+        // 3. クイズ制御ロジック
+        // ==========================================
+        function startSession(subject) {
+            currentSubject = subject;
+            isReviewMode = false;
+            let filtered = questions.filter(q => q.subject === subject);
+            if (filtered.length === 0) {
+                alert(`堪忍！「${subject}」の問題がまだ登録されてへんみたいや。CSVから追加してな！`);
+                return;
+            }
+            currentSessionQuestions = shuffleArray(filtered).slice(0, 10);
+            initQuizView();
+        }
+
+        function startReview() {
+            if (wrongList.length === 0) {
+                setOkanMood('happy', "苦手な問題は1つもあらへん！あんたホンマに優秀やねぇ！");
+                alert("今、苦手リストは空っぽやで！");
+                return;
+            }
+            currentSubject = "苦手復習";
+            isReviewMode = true;
+            currentSessionQuestions = shuffleArray([...wrongList]).slice(0, 10);
+            initQuizView();
+        }
+
+        function initQuizView() {
+            currentIndex = 0;
+            score = 0;
+            switchView('view-quiz');
+            showQuestion();
+        }
+
+        function showQuestion() {
+            const q = currentSessionQuestions[currentIndex];
+            document.getElementById('quiz-subject').innerText = `${currentSubject}モード`;
+            document.getElementById('quiz-progress').innerText = `${currentIndex + 1} / ${currentSessionQuestions.length} 問目`;
+            document.getElementById('question-text').innerText = q.question;
+
+            const container = document.getElementById('choices-container');
+            container.innerHTML = "";
+            document.getElementById('judge-box').style.display = "none";
+            document.getElementById('btn-next').style.display = "none";
+
+            const choices = [q.choice1, q.choice2, q.choice3, q.choice4];
+            choices.forEach((choice, idx) => {
+                if (choice) {
+                    const btn = document.createElement('button');
+                    btn.className = "btn-choice";
+                    btn.innerText = choice;
+                    btn.onclick = () => selectAnswer(idx);
+                    container.appendChild(btn);
+                }
+            });
+
+            if (currentIndex > 0 && currentIndex % 3 === 0) {
+                setOkanMood('cheer', getRandomSerifu(SERIFU.cheer));
+            }
+        }
+
+        function selectAnswer(selectedIdx) {
+            const q = currentSessionQuestions[currentIndex];
+            const container = document.getElementById('choices-container');
+            const judgeBox = document.getElementById('judge-box');
+            const judgeTitle = document.getElementById('judge-title');
+            const correctAnswerDisplay = document.getElementById('correct-answer-display');
+            const explanationDisplay = document.getElementById('explanation-display');
+            
+            const correctIdx = parseInt(q.answer) - 1;
+            const isCorrect = (selectedIdx === correctIdx);
+            
+            updateStats(q.subject, isCorrect);
+
+            Array.from(container.children).forEach((btn, idx) => {
+                btn.disabled = true;
+                if (idx === correctIdx) {
+                    btn.classList.add('correct-choice');
+                } else if (idx === selectedIdx && !isCorrect) {
+                    btn.classList.add('wrong-choice');
+                }
+            });
+
+            if (isCorrect) {
+                score++;
+                playSound(SOUND_PATHS.correct);
+                judgeBox.className = "judge-box judge-success";
+                judgeTitle.innerHTML = "⭕ 正解や！素晴らしい！";
+                setOkanMood('happy', getRandomSerifu(SERIFU.correct));
+                
+                if (isReviewMode) {
+                    wrongList = wrongList.filter(w => w.question !== q.question);
+                    localStorage.setItem('okan_wrong_list', JSON.stringify(wrongList));
+                }
+            } else {
+                playSound(SOUND_PATHS.incorrect);
+                judgeBox.className = "judge-box judge-wrong";
+                judgeTitle.innerHTML = "❌ あちゃー、不正解や…";
+                setOkanMood('sad', getRandomSerifu(SERIFU.wrong));
+
+                if (!wrongList.some(w => w.question === q.question)) {
+                    wrongList.push(q);
+                    localStorage.setItem('okan_wrong_list', JSON.stringify(wrongList));
+                }
+            }
+
+            correctAnswerDisplay.innerHTML = `<strong>【問題文】</strong><br>${q.question}<br><br><strong>【正解】</strong> ${getChoiceText(q, correctIdx)}`;
+            explanationDisplay.innerHTML = `<strong>おかんの解説:</strong><br>${q.explanation || '解説は特にあらへん。次はバチッと当てよな！'}`;
+
+            judgeBox.style.display = "block";
+            document.getElementById('btn-next').style.display = "block";
+        }
+
+        function nextQuestion() {
+            currentIndex++;
+            if (currentIndex < currentSessionQuestions.length) {
+                showQuestion();
+            } else {
+                showResult();
+            }
+        }
+
+        function showResult() {
+            switchView('view-result');
+            const total = currentSessionQuestions.length;
+            document.getElementById('result-score').innerText = `${total}問中 ${score}問正解！`;
+
+            if (score === total) {
+                setOkanMood('happy', getRandomSerifu(SERIFU.finish_perfect));
+            } else if (score >= total * 0.7) {
+                setOkanMood('cheer', getRandomSerifu(SERIFU.finish_good));
+            } else {
+                setOkanMood('sad', getRandomSerifu(SERIFU.finish_bad));
+            }
+            updateHomeStats();
+        }
+
+        // 🏠 学習を中止してトップに戻る処理
+        function abortSession() {
+            if (confirm("お勉強を途中でやめてホーム画面に戻る？（ここまでの解答履歴はセーブされるで）")) {
+                goHome();
+            }
+        }
+
+        // ==========================================
+        // 4. データ保存・読み込み関連（上書き対応）
+        // ==========================================
+        function setupDragAndDrop() {
+            const dropZone = document.getElementById('drop-zone');
+            const fileInput = document.getElementById('file-input');
+            dropZone.onclick = () => fileInput.click();
+            dropZone.ondragover = (e) => { e.preventDefault(); dropZone.classList.add('dragover'); };
+            dropZone.ondragleave = () => dropZone.classList.remove('dragover');
+            dropZone.ondrop = (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('dragover');
+                if (e.dataTransfer.files.length > 0) handleFile(e.dataTransfer.files[0]);
+            };
+            fileInput.onchange = (e) => {
+                if (e.target.files.length > 0) handleFile(e.target.files[0]);
+            };
+        }
+
+        function handleFile(file) {
+            const reader = new FileReader();
+            if (file.name.endsWith('.csv')) {
+                reader.onload = function(e) {
+                    Papa.parse(e.target.result, {
+                        header: true,
+                        skipEmptyLines: true,
+                        complete: function(results) { processImportedQuestions(results.data); }
+                    });
+                };
+                reader.readAsText(file, 'UTF-8');
+            } else if (file.name.endsWith('.json')) {
+                reader.onload = function(e) {
+                    try {
+                        processImportedQuestions(JSON.parse(e.target.result));
+                    } catch(err) {
+                        alert("JSONのパースに失敗してもた。フォーマット確認してな！");
+                    }
+                };
+                reader.readAsText(file, 'UTF-8');
+            } else {
+                alert("CSVかJSONファイルを入れてな！");
+            }
+        }
+
+        // 🌟【改善】同じ問題文があれば「新しいデータで上書き更新」する処理
+        function processImportedQuestions(newData) {
+            if (!Array.isArray(newData) || newData.length === 0 || !newData[0].subject || !newData[0].question) {
+                alert("データのフォーマットが間違ってるっぽいでおかんの指定通りに作ってな。");
+                setOkanMood('angry', "コラ！データの形がバラバラやんか！");
+                return;
+            }
+
+            let updateCount = 0;
+            let addCount = 0;
+            
+            newData.forEach(newQ => {
+                // すでに同じ問題文があるかインデックスを探す
+                const existingIndex = questions.findIndex(oldQ => oldQ.question === newQ.question);
+                
+                if (existingIndex !== -1) {
+                    // 発見したら新しいデータで丸ごと上書き！
+                    questions[existingIndex] = newQ;
+                    updateCount++;
+                } else {
+                    // なければ新規追加！
+                    questions.push(newQ);
+                    addCount++;
+                }
+            });
+
+            localStorage.setItem('okan_custom_questions', JSON.stringify(questions));
+            setOkanMood('surprised', `お見事！新しい問題を追加したで！新規:${addCount}問、上書き修正:${updateCount}問や！`);
+            alert(`データを反映したで！\n・新しく追加された問題: ${addCount} 問\n・上書き修正された問題: ${updateCount} 問\n（現在の総問題数: ${questions.length}問）`);
+            
+            document.getElementById('total-questions-count').innerText = `現在の総問題数: ${questions.length}問`;
+            updateHomeStats();
+        }
+
+        function clearCustomQuestions() {
+            if (confirm("本当に初期の問題データに戻してええの？あんたがコツコツ貯めた問題データも全部消えちゃうで。")) {
+                localStorage.removeItem('okan_custom_questions');
+                loadQuestions();
+                setOkanMood('normal', "初期データに戻したで！");
+                updateHomeStats();
+            }
+        }
+
+        function downloadCurrentQuestionsCSV() {
+            if (questions.length === 0) {
+                alert("問題データが1問もあらへんよ！");
+                return;
+            }
+            const csvString = Papa.unparse(questions);
+            const blob = new Blob(["\uFEFF" + csvString], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", "my_okan_questions_bank.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            setOkanMood('happy', "あんた専用の問題集CSVを書き出したで！大切に保管しときや〜！");
+        }
+
+        function downloadSampleCSV() {
+            const csvContent = "\uFEFF" + "subject,question,choice1,choice2,choice3,choice4,answer,explanation\n" +
+                "数学,一次関数 y = 2x + 3 で x = 4 のときの y の値は？,8,11,14,16,2,y = 2 × 4 + 3 = 8 + 3 = 11 となるな！簡単や！\n" +
+                "国語,「矛盾（むじゅん）」の由来となった２つの武器は？,剣と盾,矛と盾,弓と矢,斧と矛,2,どんな盾も突き通す「矛」と防ぐ「盾」の話からできた言葉や。";
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", "okan_sample.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // ==========================================
+        // 5. おかん演出・オーディオ系
+        // ==========================================
+        function setOkanMood(mood, text) {
+            const img = document.getElementById('okan-img');
+            const balloon = document.getElementById('okan-balloon');
+            if (OKAN_IMAGES[mood]) {
+                img.src = OKAN_IMAGES[mood];
+            }
+            if (text) balloon.innerText = text;
+        }
+
+        function triggerOkanGreeting() {
+            const ran = Math.floor(Math.random() * 4);
+            if (ran === 0) setOkanMood('angry', getRandomSerifu(SERIFU.angry));
+            else if (ran === 1) setOkanMood('cheer', getRandomSerifu(SERIFU.cheer));
+            else if (ran === 2) setOkanMood('surprised', getRandomSerifu(SERIFU.surprised));
+            else setOkanMood('normal', "なになに？おかんの顔に何かついとる？勉強しなはれ！");
+        }
+
+        function playSound(src) {
+            const audio = new Audio(src);
+            audio.play().catch(e => console.log("音声ファイルの再生に失敗したか、まだファイルが設置されてへんみたいやね：", e));
+        }
+
+        // ユーティリティ
+        function switchView(viewId) {
+            document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
+            document.getElementById(viewId).classList.add('active');
+        }
+        function getRandomSerifu(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+        function getChoiceText(q, idx) { return [q.choice1, q.choice2, q.choice3, q.choice4][idx] || ""; }
+        function shuffleArray(array) {
+            const arr = [...array];
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+        function updateStats(subject, isCorrect) {
+            historyStats.total++;
+            if (isCorrect) historyStats.correct++;
+            if (!historyStats.subjects[subject]) historyStats.subjects[subject] = { total: 0, correct: 0 };
+            historyStats.subjects[subject].total++;
+            if (isCorrect) historyStats.subjects[subject].correct++;
+            localStorage.setItem('okan_stats', JSON.stringify(historyStats));
+        }
+        function retrySubject() { if (isReviewMode) startReview(); else startSession(currentSubject); }
+        function goHome() { switchView('view-home'); updateHomeStats(); setOkanMood('normal', "お帰り！次はどの教科にチャレンジするん？"); }
+    </script>
+</body>
+</html>

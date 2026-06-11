@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ちび死神のおかん勉強塾</title>
+    <title>死神オカンの一問一答</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <style>
         :root {
@@ -31,14 +31,14 @@
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Helvetica Neue', Arial, sans-serif; }
-        body { background-color: var(--bg-color); color: var(--text-color); transition: all 0.3s ease; padding-bottom: 140px; min-height: 100vh; }
+        body { background-color: var(--bg-color); color: var(--text-color); transition: all 0.3s ease; padding-bottom: 180px; min-height: 100vh; }
 
         header { background: linear-gradient(135deg, var(--primary-color), #a29bfe); color: white; padding: 20px; text-align: center; border-radius: 0 0 24px 24px; box-shadow: var(--shadow); position: relative; }
         header h1 { font-size: 1.8rem; margin-bottom: 5px; }
         header p { font-size: 0.9rem; opacity: 0.9; }
 
         .container { max-width: 600px; margin: 20px auto; padding: 0 15px; }
-        .card { background-color: var(--card-bg); border-radius: var(--border-radius); padding: 20px; box-shadow: var(--shadow); margin-bottom: 20px; transition: transform 0.2s; }
+        .card { background-color: var(--card-bg); border-radius: var(--border-radius); padding: 20px; box-shadow: var(--shadow); margin-bottom: 20px; transition: transform 0.2s; position: relative; }
         
         /* 画面制御 */
         .view-section { display: none; }
@@ -68,7 +68,6 @@
             animation: okan-float 3s ease-in-out infinite;
         }
 
-        /* ちび死神アニメーション（浮遊と揺れ） */
         @keyframes okan-float {
             0% { transform: translateY(0px) rotate(0deg); }
             50% { transform: translateY(-8px) rotate(3deg); }
@@ -90,7 +89,7 @@
         .sub-review { background-color: #8854d0; grid-column: span 2; }
 
         /* クイズ画面 */
-        .quiz-header { display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 15px; padding-bottom: 5px; border-bottom: 2px dashed var(--primary-color); }
+        .quiz-header { display: flex; justify-content: space-between; align-items: center; font-weight: bold; margin-bottom: 15px; padding-bottom: 5px; border-bottom: 2px dashed var(--primary-color); }
         #question-text { font-size: 1.2rem; font-weight: bold; margin-bottom: 20px; line-height: 1.5; white-space: pre-wrap; }
         .choices-grid { display: flex; flex-direction: column; gap: 10px; }
         .btn-choice {
@@ -113,6 +112,7 @@
 
         /* 汎用ボタン・ドロップエリア */
         .btn-main { padding: 10px 20px; background-color: var(--primary-color); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        .btn-abort { padding: 4px 10px; background-color: var(--accent-color); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: bold; }
         .drop-zone { border: 3px dashed var(--primary-color); border-radius: 12px; padding: 20px; text-align: center; cursor: pointer; margin-top: 10px; transition: background 0.3s; }
         .drop-zone.dragover { background-color: rgba(108, 92, 231, 0.1); }
         
@@ -121,12 +121,17 @@
         /* 結果画面 */
         .score-display { text-align: center; font-size: 2rem; font-weight: bold; margin: 20px 0; color: var(--accent-color); }
         .result-actions { display: flex; flex-direction: column; gap: 10px; }
+
+        /* フッター免責事項 */
+        footer {
+            margin-top: 40px; padding: 20px; text-align: center; font-size: 0.75rem; color: #777; line-height: 1.6; border-top: 1px dashed rgba(0,0,0,0.1);
+        }
     </style>
 </head>
 <body>
 
     <header>
-        <h1>ちび死神のおかん勉強塾</h1>
+        <h1>死神オカンの一問一答</h1>
         <p>「こらー！サボったらあかんで！おかんが教えたる！」</p>
     </header>
 
@@ -156,7 +161,7 @@
                 <p style="font-size: 0.85rem; color: #777;" id="total-questions-count">現在の総問題数: 0問</p>
                 <div id="drop-zone" class="drop-zone">
                     ここにCSVファイルをドラッグ＆ドロップするか、クリックして選択してや！<br>
-                    <strong>（追加するたびに、どんどん問題が蓄積されていくで！）</strong>
+                    <strong>（同じ問題文があれば、新しい内容に上書き修正されるで！）</strong>
                     <input type="file" id="file-input" accept=".csv,.json" style="display: none;">
                 </div>
                 <div style="margin-top: 12px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
@@ -170,8 +175,11 @@
         <section id="view-quiz" class="view-section">
             <div class="card">
                 <div class="quiz-header">
-                    <span id="quiz-subject">教科</span>
-                    <span id="quiz-progress">0 / 0 問目</span>
+                    <div>
+                        <span id="quiz-subject">教科</span>
+                        <span id="quiz-progress" style="margin-left: 10px; font-size: 0.9rem; color: #777;">0 / 0 問目</span>
+                    </div>
+                    <button class="btn-abort" onclick="abortSession()">🏠 途中でやめる</button>
                 </div>
                 <div id="question-text">ここに問題文が表示されるで。</div>
                 <div class="choices-grid" id="choices-container">
@@ -199,6 +207,12 @@
         </section>
     </div>
 
+    <footer>
+        本サイトは個人の学習・トレーニング記録のための個人プロジェクトです。<br>
+        記載内容は作者の経験に基づくものであり、専門的な指導ではありません。運動・学習は自己責任にて行ってください。<br>
+        利用によるいかなる損害についても作者は責任を負いません。
+    </footer>
+
     <div id="okan-container">
         <div id="okan-balloon">あんた、お勉強の時間やで！おかんがしっかり見てるからな！</div>
         <div id="okan-img-box" onclick="triggerOkanGreeting()">
@@ -211,7 +225,6 @@
         // 1. データ・外部ファイルパス定義
         // ==========================================
 
-        // 外部画像フォルダのパス指定 (.png)
         const OKAN_IMAGES = {
             normal: "images/normal.png",
             happy: "images/happy.png",
@@ -220,13 +233,12 @@
             surprised: "images/surprised.png"
         };
 
-        // 効果音ファイルのパス指定（.wavから.mp3に更新！）
         const SOUND_PATHS = {
             correct: "sounds/correct.mp3",
             incorrect: "sounds/incorrect.mp3"
         };
 
-        // おかんのセリフ集
+        // おかんのセリフ集（末尾にカンマを打てば、いくらでも行を追加できるで！）
         const SERIFU = {
             welcome: [
                 "おっ、やる気出してきたやん！おかん嬉しいわぁ。",
@@ -274,7 +286,6 @@
             ]
         };
 
-        // 内蔵デフォルト問題
         const DEFAULT_QUESTIONS = [
             { subject: "国語", question: "「おかん」を標準語に直したとき、最も適切なものはどれ？", choice1: "お姉さん", choice2: "お母さん", choice3: "おばあちゃん", choice4: "お嬢さん", answer: 2, explanation: "「おかん」は主に関西地方で「お母さん」を親しみに込めて呼ぶ言葉やで！" },
             { subject: "数学", question: "一次方程式 2x + 5 = 11 のとき、x の値はいくつ？", choice1: "2", choice2: "3", choice3: "4", choice4: "5", answer: 2, explanation: "2x = 11 - 5 より 2x = 6。両辺を2で割って x = 3 になるな！" },
@@ -283,7 +294,6 @@
             { subject: "社会", question: "日本で一番高い山「富士山」の標高は次のうちどれ？", choice1: "3,776m", choice2: "3,180m", choice3: "2,500m", choice4: "4,123m", answer: 1, explanation: "「みななろ（3776）富士山」って覚えるんやでおかんとの約束な！" }
         ];
 
-        // 状態管理
         let questions = [];
         let currentSessionQuestions = [];
         let currentIndex = 0;
@@ -401,23 +411,20 @@
             const correctAnswerDisplay = document.getElementById('correct-answer-display');
             const explanationDisplay = document.getElementById('explanation-display');
             
-            // CSV側の「1〜4」を、プログラムの「0〜3」に合わせるため -1 する
             const correctIdx = parseInt(q.answer) - 1;
             const isCorrect = (selectedIdx === correctIdx);
             
             updateStats(q.subject, isCorrect);
 
-            // 全ボタン無効化 & スタイル反映
             Array.from(container.children).forEach((btn, idx) => {
                 btn.disabled = true;
                 if (idx === correctIdx) {
-                    btn.classList.add('correct-choice'); // 正解の選択肢をハイライト
+                    btn.classList.add('correct-choice');
                 } else if (idx === selectedIdx && !isCorrect) {
-                    btn.classList.add('wrong-choice'); // 間違えて選んだ肢
+                    btn.classList.add('wrong-choice');
                 }
             });
 
-            // 正解・不正解処理 (文字表示＋mp3効果音)
             if (isCorrect) {
                 score++;
                 playSound(SOUND_PATHS.correct);
@@ -441,7 +448,6 @@
                 }
             }
 
-            // 問題・正解・解説の「文字表示」処理
             correctAnswerDisplay.innerHTML = `<strong>【問題文】</strong><br>${q.question}<br><br><strong>【正解】</strong> ${getChoiceText(q, correctIdx)}`;
             explanationDisplay.innerHTML = `<strong>おかんの解説:</strong><br>${q.explanation || '解説は特にあらへん。次はバチッと当てよな！'}`;
 
@@ -473,8 +479,15 @@
             updateHomeStats();
         }
 
+        // 🏠 学習を中止してトップに戻る処理
+        function abortSession() {
+            if (confirm("お勉強を途中でやめてホーム画面に戻る？（ここまでの解答履歴はセーブされるで）")) {
+                goHome();
+            }
+        }
+
         // ==========================================
-        // 4. データ保存・読み込み関連（蓄積＆DL対応）
+        // 4. データ保存・読み込み関連（上書き対応）
         // ==========================================
         function setupDragAndDrop() {
             const dropZone = document.getElementById('drop-zone');
@@ -517,7 +530,7 @@
             }
         }
 
-        // 🌟【改善】問題を上書きせず、重複を避けながら「蓄積」する処理
+        // 🌟【改善】同じ問題文があれば「新しいデータで上書き更新」する処理
         function processImportedQuestions(newData) {
             if (!Array.isArray(newData) || newData.length === 0 || !newData[0].subject || !newData[0].question) {
                 alert("データのフォーマットが間違ってるっぽいでおかんの指定通りに作ってな。");
@@ -525,20 +538,27 @@
                 return;
             }
 
-            let addedCount = 0;
+            let updateCount = 0;
+            let addCount = 0;
             
             newData.forEach(newQ => {
-                // すでに同じ問題文が登録されていないかチェック
-                const isDuplicate = questions.some(oldQ => oldQ.question === newQ.question);
-                if (!isDuplicate) {
+                // すでに同じ問題文があるかインデックスを探す
+                const existingIndex = questions.findIndex(oldQ => oldQ.question === newQ.question);
+                
+                if (existingIndex !== -1) {
+                    // 発見したら新しいデータで丸ごと上書き！
+                    questions[existingIndex] = newQ;
+                    updateCount++;
+                } else {
+                    // なければ新規追加！
                     questions.push(newQ);
-                    addedCount++;
+                    addCount++;
                 }
             });
 
             localStorage.setItem('okan_custom_questions', JSON.stringify(questions));
-            setOkanMood('surprised', `お見事！新しく${addedCount}問を蓄積したで！合計で${questions.length}問になったわ！`);
-            alert(`新しく ${addedCount} 問のデータを追加（蓄積）したで！\n（重複していた問題はスキップされました）`);
+            setOkanMood('surprised', `お見事！新しい問題を追加したで！新規:${addCount}問、上書き修正:${updateCount}問や！`);
+            alert(`データを反映したで！\n・新しく追加された問題: ${addCount} 問\n・上書き修正された問題: ${updateCount} 問\n（現在の総問題数: ${questions.length}問）`);
             
             document.getElementById('total-questions-count').innerText = `現在の総問題数: ${questions.length}問`;
             updateHomeStats();
@@ -553,17 +573,12 @@
             }
         }
 
-        // 🌟【新機能】現在溜まっている問題集データをCSVとしてダウンロード
         function downloadCurrentQuestionsCSV() {
             if (questions.length === 0) {
                 alert("問題データが1問もあらへんよ！");
                 return;
             }
-
-            // PapaParseを使ってJSON配列をCSV文字列に逆変換
             const csvString = Papa.unparse(questions);
-            
-            // Excel対応用のBOMを先頭に付与して文字化けを防ぐ
             const blob = new Blob(["\uFEFF" + csvString], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
             const link = document.createElement("a");
@@ -583,7 +598,7 @@
             const url = URL.createObjectURL(blob);
             const link = document.createElement("a");
             link.setAttribute("href", url);
-            link.setAttribute("download", "chibi_okan_sample.csv");
+            link.setAttribute("download", "okan_sample.csv");
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);

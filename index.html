@@ -45,7 +45,7 @@
         .view-section.active { display: block; animation: fadeIn 0.4s ease; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* おかん死神の固定配置（右下） */
+        /* オカン死神の固定配置（右下） */
         #okan-container {
             position: fixed; bottom: 20px; right: 20px; z-index: 1000;
             display: flex; flex-direction: column; align-items: flex-end; pointer-events: none; max-width: 300px;
@@ -132,7 +132,7 @@
 
     <header>
         <h1>死神オカンの一問一答</h1>
-        <p>「こらー！サボったらあかんで！おかんが教えたる！」</p>
+        <p>「こらー！サボったらあかんで！オカンが教えたる！」</p>
     </header>
 
     <div class="container">
@@ -214,9 +214,9 @@
     </footer>
 
     <div id="okan-container">
-        <div id="okan-balloon">あんた、お勉強の時間やで！おかんがしっかり見てるからな！</div>
+        <div id="okan-balloon">あんた、お勉強の時間やで！オカンがしっかり見てるからな！</div>
         <div id="okan-img-box" onclick="triggerOkanGreeting()">
-            <img id="okan-img" src="images/normal.png" alt="ちび死神おかん">
+            <img id="okan-img" src="images/normal.png" alt="ちび死神オカン">
         </div>
     </div>
 
@@ -238,30 +238,29 @@
             incorrect: "sounds/incorrect.mp3"
         };
 
-        // おかんのセリフ集（末尾にカンマを打てば、いくらでも行を追加できるで！）
         const SERIFU = {
             welcome: [
-                "おっ、やる気出してきたやん！おかん嬉しいわぁ。",
-                "サボったらあかんで！おかんが横でガッツリ見たるからな。",
+                "おっ、やる気出してきたやん！オカン嬉しいわぁ。",
+                "サボったらあかんで！オカンが横でガッツリ見たるからな。",
                 "体調は大丈夫？無理したらいかんで、でも勉強はしよな！"
             ],
             correct: [
-                "よっしゃ正解！あんた天才とちゃう！？おかん鼻が高いわぁ！",
+                "よっしゃ正解！あんた天才とちゃう！？オカン鼻が高いわぁ！",
                 "大正解！その調子や！今日のおやつはちょっと豪華にしたるわな！",
                 "すごいやん！ちゃんと勉強の成果出とるね、えらいえらい！",
-                "完璧や！おかん、感動して涙出てきそうやわ…"
+                "完璧や！オカン、感動して涙出てきそうやわ…"
             ],
             wrong: [
                 "あらら、ちょっとミスってもうたか。まぁ次気いつけたら大丈夫や！",
-                "どんまいどんまい！間違えたとこが一番賢くなれるチャンスやで。",
+                "どんまいどんまい！間違えたとこが一番賢くなれるチャンスやデ。",
                 "おっと、うっかりさんやね。解説しっかり読んで次進もか！",
-                "あきらめたらあかんで！おかんが何回でも付き合いたるからな。"
+                "あきらめたらあかんで！オカンが何回でも付き合いたるからな。"
             ],
             cheer: [
                 "よしよし、集中力上がってきたんちゃう？",
                 "姿勢悪くなってへん？背筋ピッと伸ばして頑張りや！",
                 "ちょっと休憩挟む？…って、まだ3問目やないかい！笑",
-                "あんたなら出来るって、おかんが一番信じてるからね。"
+                "あんたなら出来るって、オカンが一番信じてるからね。"
             ],
             angry: [
                 "こらー！もうちょっと集中しなさい！",
@@ -270,10 +269,10 @@
             ],
             surprised: [
                 "ひええぇっ！えらい難しい問題持ってきたなぁ！",
-                "な、なんやて！？おかんもびっくりやわ！"
+                "な、なんやて！？オカンもびっくりやわ！"
             ],
             finish_perfect: [
-                "うわぁぁ全問正解やん！おかん、嬉しすぎてご近所さんに言いふらしてくるわ！",
+                "うわぁぁ全問正解やん！オカン、嬉しすぎてご近所さんに言いふらしてくるわ！",
                 "文句なしの満点！あんたはホンマに自慢の我が子やわぁ！！"
             ],
             finish_good: [
@@ -281,24 +280,25 @@
                 "ええ感じやん！間違えたところだけ、あとでちょっと復習しときや。"
             ],
             finish_bad: [
-                "今回はちょっと難しかったか。おかんと一緒に「苦手復習」でもう一回やろ？",
-                "伸び代がいっぱいあるってことや！おかん、何回でも付き合うたるからな！"
+                "今回はちょっと難しかったか。オカンと一緒に「苦手復習」でもう一回やろ？",
+                "伸び代がいっぱいあるってことや！オカン、何回でも付き合うたるからな！"
             ]
         };
 
+        // デフォルト問題（もし最初から何も入れたくない場合はここを空っぽ [] にしてな）
         const DEFAULT_QUESTIONS = [
             { subject: "国語", question: "「おかん」を標準語に直したとき、最も適切なものはどれ？", choice1: "お姉さん", choice2: "お母さん", choice3: "おばあちゃん", choice4: "お嬢さん", answer: 2, explanation: "「おかん」は主に関西地方で「お母さん」を親しみに込めて呼ぶ言葉やで！" },
             { subject: "数学", question: "一次方程式 2x + 5 = 11 のとき、x の値はいくつ？", choice1: "2", choice2: "3", choice3: "4", choice4: "5", answer: 2, explanation: "2x = 11 - 5 より 2x = 6。両辺を2で割って x = 3 になるな！" },
             { subject: "英語", question: "「私は毎日勉強します」を英語にした時、空欄に入るのは？ \n I (   ) English every day.", choice1: "studies", choice2: "studying", choice3: "study", choice4: "studied", answer: 3, explanation: "主語が I（一人称単数）で、現在の習慣を表すから動詞の原形「study」が入るで！" },
             { subject: "理科", question: "植物が光を受けてデンプンなどの養分を作る働きを何という？", choice1: "呼吸", choice2: "蒸散", choice3: "光合成", choice4: "吸収", answer: 3, explanation: "葉緑体で行われる「光合成」やね。水と二酸化炭素から酸素と養分を作るんやで！" },
-            { subject: "社会", question: "日本で一番高い山「富士山」の標高は次のうちどれ？", choice1: "3,776m", choice2: "3,180m", choice3: "2,500m", choice4: "4,123m", answer: 1, explanation: "「みななろ（3776）富士山」って覚えるんやでおかんとの約束な！" }
+            { subject: "社会", question: "日本で一番高い山「富士山」の標高は次のうちどれ？", choice1: "3,776m", choice2: "3,180m", choice3: "2,500m", choice4: "4,123m", answer: 1, explanation: "「みななろ（3776）富士山」って覚えるんやでオカンとの約束な！" }
         ];
 
         let questions = [];
         let currentSessionQuestions = [];
         let currentIndex = 0;
         let score = 0;
-        let wrongList = JSON.parse(localStorage.getItem('okan_wrong_list')) || [];
+        let wrongList = [];
         let historyStats = JSON.parse(localStorage.getItem('okan_stats')) || { total: 0, correct: 0, subjects: {} };
         let currentSubject = "";
         let isReviewMode = false;
@@ -320,6 +320,8 @@
             } else {
                 questions = [...DEFAULT_QUESTIONS];
             }
+            // 苦手リストの読み込み
+            wrongList = JSON.parse(localStorage.getItem('okan_wrong_list')) || [];
             document.getElementById('total-questions-count').innerText = `現在の総問題数: ${questions.length}問`;
         }
 
@@ -449,7 +451,7 @@
             }
 
             correctAnswerDisplay.innerHTML = `<strong>【問題文】</strong><br>${q.question}<br><br><strong>【正解】</strong> ${getChoiceText(q, correctIdx)}`;
-            explanationDisplay.innerHTML = `<strong>おかんの解説:</strong><br>${q.explanation || '解説は特にあらへん。次はバチッと当てよな！'}`;
+            explanationDisplay.innerHTML = `<strong>オカンの解説:</strong><br>${q.explanation || '解説は特にあらへん。次はバチッと当てよな！'}`;
 
             judgeBox.style.display = "block";
             document.getElementById('btn-next').style.display = "block";
@@ -479,7 +481,6 @@
             updateHomeStats();
         }
 
-        // 🏠 学習を中止してトップに戻る処理
         function abortSession() {
             if (confirm("お勉強を途中でやめてホーム画面に戻る？（ここまでの解答履歴はセーブされるで）")) {
                 goHome();
@@ -530,27 +531,29 @@
             }
         }
 
-        // 🌟【改善】同じ問題文があれば「新しいデータで上書き更新」する処理
         function processImportedQuestions(newData) {
             if (!Array.isArray(newData) || newData.length === 0 || !newData[0].subject || !newData[0].question) {
-                alert("データのフォーマットが間違ってるっぽいでおかんの指定通りに作ってな。");
+                alert("データのフォーマットが間違ってるっぽいでオカンの指定通りに作ってな。");
                 setOkanMood('angry', "コラ！データの形がバラバラやんか！");
                 return;
+            }
+
+            // 初めて自分でCSVを入れた時は、デフォルトデータをクリアして純粋に上書きする
+            const isFirstImport = !localStorage.getItem('okan_custom_questions');
+            if (isFirstImport) {
+                questions = [];
             }
 
             let updateCount = 0;
             let addCount = 0;
             
             newData.forEach(newQ => {
-                // すでに同じ問題文があるかインデックスを探す
                 const existingIndex = questions.findIndex(oldQ => oldQ.question === newQ.question);
                 
                 if (existingIndex !== -1) {
-                    // 発見したら新しいデータで丸ごと上書き！
                     questions[existingIndex] = newQ;
                     updateCount++;
                 } else {
-                    // なければ新規追加！
                     questions.push(newQ);
                     addCount++;
                 }
@@ -564,11 +567,14 @@
             updateHomeStats();
         }
 
+        // 🌟【改善】問題データを元に戻す時、苦手リストも同時に完全に削除する
         function clearCustomQuestions() {
-            if (confirm("本当に初期の問題データに戻してええの？あんたがコツコツ貯めた問題データも全部消えちゃうで。")) {
+            if (confirm("本当に初期の状態に戻してええの？あんたがコツコツ貯めた問題データも、苦手問題リストも、全部キレイに消えちゃうで。")) {
                 localStorage.removeItem('okan_custom_questions');
+                localStorage.removeItem('okan_wrong_list'); // 🌟苦手リストも一緒に削除！
+                
                 loadQuestions();
-                setOkanMood('normal', "初期データに戻したで！");
+                setOkanMood('normal', "問題データと苦手リストを全部クリアして、初期状態に戻したで！");
                 updateHomeStats();
             }
         }
@@ -605,7 +611,7 @@
         }
 
         // ==========================================
-        // 5. おかん演出・オーディオ系
+        // 5. オカン演出・オーディオ系
         // ==========================================
         function setOkanMood(mood, text) {
             const img = document.getElementById('okan-img');
@@ -621,7 +627,7 @@
             if (ran === 0) setOkanMood('angry', getRandomSerifu(SERIFU.angry));
             else if (ran === 1) setOkanMood('cheer', getRandomSerifu(SERIFU.cheer));
             else if (ran === 2) setOkanMood('surprised', getRandomSerifu(SERIFU.surprised));
-            else setOkanMood('normal', "なになに？おかんの顔に何かついとる？勉強しなはれ！");
+            else setOkanMood('normal', "なになに？オカンの顔に何かついとる？勉強しなはれ！");
         }
 
         function playSound(src) {

@@ -116,6 +116,9 @@
         .drop-zone { border: 3px dashed var(--primary-color); border-radius: 12px; padding: 20px; text-align: center; cursor: pointer; margin-top: 10px; transition: background 0.3s; }
         .drop-zone.dragover { background-color: rgba(108, 92, 231, 0.1); }
         
+        /* スマホ用テキスト直貼りスタイル */
+        .btn-paste-trigger { background-color: var(--primary-color); color: white; border: none; padding: 12px; border-radius: 8px; width: 100%; font-weight: bold; font-size: 1rem; cursor: pointer; margin-top: 10px; display: flex; justify-content: center; align-items: center; gap: 5px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        
         /* プロンプトコピーエリアのスタイル */
         .prompt-area { width: 100%; height: 120px; margin-top: 10px; padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 0.8rem; background-color: rgba(0,0,0,0.02); color: #555; resize: none; font-family: monospace; }
         .btn-copy { background-color: #20bf6b; margin-top: 5px; width: 100%; padding: 8px; border: none; border-radius: 6px; color: white; font-weight: bold; cursor: pointer; font-size: 0.9rem; }
@@ -164,11 +167,17 @@
             <div class="card">
                 <h3>📂 問題データの追加・管理</h3>
                 <p style="font-size: 0.85rem; color: #777;" id="total-questions-count">現在の総問題数: 0問</p>
+                
+                <!-- PC用：ドラッグ＆ドロップ/ファイル選択エリア -->
                 <div id="drop-zone" class="drop-zone">
-                    ここにファイルをドロップするか、クリックしてな！<br>
+                    PCの場合はここにファイルをドロップするかクリック！
                     <input type="file" id="file-input" accept=".csv,.json" style="display: none;">
                 </div>
-                <div style="margin-top: 12px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+
+                <!-- 🌟スマホ用：コピペ専用ボタンを追加 -->
+                <button class="btn-paste-trigger" onclick="openTextPasteModal()">📋 スマホはここをタップしてコピペ登録！</button>
+
+                <div style="margin-top: 15px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
                     <button class="btn-main" onclick="downloadSampleCSV()">📄 サンプルCSV</button>
                     <button class="btn-main" style="background-color:#20bf6b;" onclick="downloadCurrentQuestionsCSV()">📥 問題集をDL</button>
                     <button class="btn-main" style="background-color:#ff7675;" onclick="clearCustomQuestions()">♻️ データをリセット</button>
@@ -176,9 +185,9 @@
 
                 <hr style="margin-top: 20px; border: none; border-top: 1px dashed rgba(0,0,0,0.15);">
 
-                <!-- 🌟AI用プロンプトコピペエリアを追加 -->
+                <!-- AI用プロンプトコピペエリア -->
                 <h3 style="margin-top: 15px; font-size: 1rem;">🤖 AIへの指示プロンプト例</h3>
-                <p style="font-size: 0.8rem; color: #666;">下の文章を丸ごとコピーしてChatGPTやClaudeに貼り付けるだけで、新しい問題を自動生成させられるで！最後に行きたいテーマを書き足してな。</p>
+                <p style="font-size: 0.8rem; color: #666;">下の文章を丸ごとコピーして対話型AI（ChatGPTやClaud等）に貼り付けるだけで、新しい問題を自動生成させられるで！最後に学習したいテーマを書き込んでな。</p>
                 <textarea id="prompt-text" class="prompt-area" readonly>あなたはプロの教育系クイズ作成者です。以下の条件に従って、クイズデータを「純粋なCSV形式」のみで出力してください。挨拶や前置き、解説などの余計なテキストは一切含めないでください。
 
 ■ 出力フォーマット（1行目は必ずこの通りにしてください）
@@ -200,6 +209,12 @@ subject,question,choice1,choice2,choice3,choice4,answer,explanation
 【ここに「中1理科の植物について5問」や「一般常識クイズ10問」などを入力してください】</textarea>
                 <button id="btn-prompt-copy" class="btn-copy" onclick="copyPromptText()">📋 プロンプトをコピーする</button>
             </div>
+
+<div><center><p style="font-size: 0.85rem; color: #777;">
+	<a href="https://studiompmax.github.io/shinigamibenkyo/tukaikata.jpg" target="_blank">
+		使い方はこちら</p></a></center><br>
+	</div>
+
         </section>
 
         <!-- 2. クイズ画面 -->
@@ -250,7 +265,6 @@ subject,question,choice1,choice2,choice3,choice4,answer,explanation
 
     <!-- おかん死神の固定コンポーネント -->
     <div id="okan-container">
-        <!-- 初期表示を「よっしゃ！やるで！」に固定 -->
         <div id="okan-balloon">よっしゃ！やるで！</div>
         <div id="okan-img-box" onclick="triggerOkanGreeting()">
             <img id="okan-img" src="images/normal.png" alt="ちび死神おかん">
@@ -515,7 +529,7 @@ subject,question,choice1,choice2,choice3,choice4,answer,explanation
         }
 
         // ==========================================
-        // 4. データ保存・読み込み・コピー関連
+        // 4. データ保存・読み込み・コピー・貼り付け関連
         // ==========================================
         function setupDragAndDrop() {
             const dropZone = document.getElementById('drop-zone');
@@ -540,6 +554,14 @@ subject,question,choice1,choice2,choice3,choice4,answer,explanation
             fileInput.onchange = (e) => {
                 if (e.target.files.length > 0) handleFile(e.target.files[0]);
             };
+        }
+
+        /* 🌟スマホ向け：テキスト直貼り入力用プロンプト窓を開く関数 */
+        function openTextPasteModal() {
+            const pastedText = prompt("AIが作ったCSVデータをここに丸ごと貼り付けて（ペーストして）な！");
+            if (pastedText && pastedText.trim() !== "") {
+                parseCSVText(pastedText);
+            }
         }
 
         function handleFile(file) {
@@ -601,11 +623,10 @@ subject,question,choice1,choice2,choice3,choice4,answer,explanation
             updateHomeStats();
         }
 
-        // 🌟プロンプトをクリップボードにコピーする関数
         function copyPromptText() {
             const promptTextArea = document.getElementById('prompt-text');
             promptTextArea.select();
-            promptTextArea.setSelectionRange(0, 99999); // スマホ対応
+            promptTextArea.setSelectionRange(0, 99999); 
 
             navigator.clipboard.writeText(promptTextArea.value).then(() => {
                 const copyBtn = document.getElementById('btn-prompt-copy');

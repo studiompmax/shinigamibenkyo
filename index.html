@@ -174,7 +174,7 @@
                     <input type="file" id="file-input" accept=".csv,.json" style="display: none;">
                 </div>
 
-                <!-- スマホ用：コピペ専用ボタン -->
+                <!-- 🌟スマホ用：コピペ専用ボタンを追加 -->
                 <button class="btn-paste-trigger" onclick="openTextPasteModal()">📋 スマホはここをタップしてコピペ登録！</button>
 
                 <div style="margin-top: 15px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
@@ -185,9 +185,9 @@
 
                 <hr style="margin-top: 20px; border: none; border-top: 1px dashed rgba(0,0,0,0.15);">
 
-                <!-- AI用プロンプトコピペエリア（強化版） -->
+                <!-- AI用プロンプトコピペエリア -->
                 <h3 style="margin-top: 15px; font-size: 1rem;">🤖 AIへの指示プロンプト例</h3>
-                <p style="font-size: 0.8rem; color: #666;">下の文章を丸ごとコピーしてChatGPTなどのAIチャットに貼り付けるだけで、新しい問題を自動生成させられるで！最後に学びたいテーマを入力してな。</p>
+                <p style="font-size: 0.8rem; color: #666;">下の文章を丸ごとコピーして対話型AI（ChatGPTやClaud等）に貼り付けるだけで、新しい問題を自動生成させられるで！最後に学習したいテーマを書き込んでな。</p>
                 <textarea id="prompt-text" class="prompt-area" readonly>あなたはプロの教育系クイズ作成者です。以下の条件に従って、クイズデータを「純粋なCSV形式」のみで出力してください。挨拶や前置き、解説などの余計なテキストは一切含めないでください。
 
 ■ 出力フォーマット（1行目は必ずこの通りにしてください）
@@ -200,18 +200,21 @@ subject,question,choice1,choice2,choice3,choice4,answer,explanation
 ・answer: 正解の番号（1〜4の半角数字）
 ・explanation: オカン風の親しみやすい関西弁での解説テキスト（「〜やで！」「〜な！」など）
 
-■ 作成の注意点（最重要）
-・文章中（question, choice1〜choice4, explanationのデータ内部）では、半角カンマ（,）および全角カンマ（，）を絶対に、何があっても使用しないでください。CSVの区切り文字と誤認されてデータ構造が完全に破綻します。文章中で区切りを入れたい場合は、必ず日本の読点（、）を使用してください。
-・出力はコードブロック（```csv ... ```）の中にCSVデータだけを記述してください。
+■ 作成の注意点
+・CSVの区切り文字であるカンマ（,）やダブルクォーテーション（"）がテキストに含まれる場合は、データ全体を " で囲むか、テキスト内では使用しないでください。
+・出力はコードブロック（```csv ... 
+```）の中にCSVデータだけを記述してください。
 
 ■ 今回作成してほしいテーマ
 【ここに「中1理科の植物について5問」や「一般常識クイズ10問」などを入力してください】</textarea>
                 <button id="btn-prompt-copy" class="btn-copy" onclick="copyPromptText()">📋 プロンプトをコピーする</button>
             </div>
+
 <div><center><p style="font-size: 0.85rem; color: #777;">
 	<a href="https://studiompmax.github.io/shinigamibenkyo/tukaikata.jpg" target="_blank">
 		使い方はこちら</p></a></center><br>
 	</div>
+
         </section>
 
         <!-- 2. クイズ画面 -->
@@ -255,8 +258,8 @@ subject,question,choice1,choice2,choice3,choice4,answer,explanation
 
     <!-- ページ最下部：免責事項 -->
     <footer>
-        本サイトは個人の学習のための個人プロジェクトです。<br>
-        記載内容は作者の経験に基づくものであり、専門的な指導ではありません。学習は自己責任にて行ってください。<br>
+        本サイトは個人の学習・トレーニング記録のための個人プロジェクトです。<br>
+        記載内容は作者の経験に基づくものであり、専門的な指導ではありません。運動・学習は自己責任にて行ってください。<br>
         利用によるいかなる損害についても作者は責任を負いません。
     </footer>
 
@@ -295,7 +298,7 @@ subject,question,choice1,choice2,choice3,choice4,answer,explanation
             ],
             wrong: [
                 "あらら、ちょっとミスってもうたか。まぁ次気いつけたら大丈夫や！",
-                "どんまいどんまい！間違えたとこが一番賢くなれるチャンスやde。",
+                "どんまいどんまい！間違えたとこが一番賢くなれるチャンスやで。",
                 "おっと、うっかりさんやね。解説しっかり読んで次進もか！",
                 "あきらめたらあかんで！おかんが何回でも付き合いたるからな。"
             ],
@@ -400,7 +403,7 @@ subject,question,choice1,choice2,choice3,choice4,answer,explanation
         function startReview() {
             if (wrongList.length === 0) {
                 setOkanMood('happy', "苦手な問題は1つもあらへん！あんたホンマに優秀やねぇ！");
-                alert("今、苦手リストは空っぽやde！");
+                alert("今、苦手リストは空っぽやで！");
                 return;
             }
             currentSubject = "苦手復習";
@@ -553,6 +556,7 @@ subject,question,choice1,choice2,choice3,choice4,answer,explanation
             };
         }
 
+        /* 🌟スマホ向け：テキスト直貼り入力用プロンプト窓を開く関数 */
         function openTextPasteModal() {
             const pastedText = prompt("AIが作ったCSVデータをここに丸ごと貼り付けて（ペーストして）な！");
             if (pastedText && pastedText.trim() !== "") {
@@ -641,16 +645,11 @@ subject,question,choice1,choice2,choice3,choice4,answer,explanation
         }
 
         function clearCustomQuestions() {
-            if (confirm("本当に初期の状態に戻してええの？（学習記録もすべて消去されます）")) {
+            if (confirm("本当に初期の状態に戻してええの？")) {
                 localStorage.removeItem('okan_custom_questions');
                 localStorage.removeItem('okan_wrong_list');
-                localStorage.removeItem('okan_stats'); // 👈 これを追加！
-                
-                // 変数も初期化する
-                historyStats = { total: 0, correct: 0, subjects: {} }; // 👈 これを追加！
-                
                 loadQuestions();
-                setOkanMood('normal', "全部きれいにリセットしたで！心機一転頑張ろな！");
+                setOkanMood('normal', "初期状態に戻したで！");
                 updateHomeStats();
             }
         }
